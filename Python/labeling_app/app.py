@@ -1,4 +1,5 @@
 import csv
+import os
 import sys
 
 from flask import Flask, jsonify, render_template, request
@@ -132,6 +133,21 @@ def save():
     count = session_obj.save_to_csv()
     total_already_labeled, existing_category_counts = load_labeled_ids(db_conn)
     return jsonify({"status": "saved", "count": count, "total": total_already_labeled})
+
+
+@app.route("/api/emergency-save", methods=["POST"])
+def emergency_save():
+    """Save session labels to CSV without querying the DB (for DB corruption recovery)."""
+    import json
+    if session_obj is None:
+        return jsonify({"error": "No session active"}), 400
+    labels = session_obj.session_labels
+    if not labels:
+        return jsonify({"status": "nothing to save", "count": 0})
+    recovery_path = os.path.join(os.path.dirname(__file__), "recovered_labels.json")
+    with open(recovery_path, "w", encoding="utf-8") as f:
+        json.dump(labels, f, ensure_ascii=False, indent=2)
+    return jsonify({"status": "saved", "count": len(labels), "path": recovery_path})
 
 
 @app.route("/api/stats")
