@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labeling</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="labeling-screen">
+    <!-- Congratulations overlay -->
+    <div class="overlay" id="congrats-overlay" style="display: none;">
+        <div class="overlay-content">
+            <h1>Congratulations!</h1>
+            <p>All labeling targets have been met.</p>
+            <p id="congrats-count"></p>
+            <button class="save-btn" onclick="saveAndExit()">Save &amp; Exit</button>
+        </div>
+    </div>
+
+    <div class="main-layout {{ 'with-sidebar' if domain_balanced else 'no-sidebar' }}">
+        <!-- Main content area -->
+        <div class="content-area">
+            <!-- Header bar -->
+            <div class="header-bar">
+                <div class="header-left">
+                    <button class="header-btn redo-btn" id="redo-btn" onclick="onRedo()">&#8630; Redo</button>
+                </div>
+                <div class="header-center">
+                    <div class="search-toggle">
+                        <button class="toggle-btn" id="btn-search" onclick="toggleSearchMode()">Search</button>
+                        <button class="toggle-btn active" id="btn-random" onclick="toggleRandomMode()">Random</button>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progress-text">0 / 0</span>
+                        <div class="progress-bar-small">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="special-counts">
+                        <span class="special-count" id="skipped-count" title="Skipped this session">Skipped: 0</span>
+                        <span class="special-count" id="not-clean-count" title="Marked not clean this session">Not clean: 0</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn save-btn" onclick="onSave()">Save &amp; Exit</button>
+                </div>
+            </div>
+
+            <!-- Search bar (hidden by default) -->
+            <div class="search-bar" id="search-bar" style="display: none;">
+                <input type="text" id="search-input" placeholder='Search articles... (e.g. Klima AND Energie, "exact phrase", -exclude)' />
+                <button class="search-go-btn" onclick="onSearch()">Search</button>
+                <span class="search-hint">Supports: AND, OR, NOT / -term, "exact phrase"</span>
+            </div>
+
+            <!-- Upper half: Article display -->
+            <div class="article-panel">
+                <div class="article-content" id="article-content">
+                    <h2 id="article-headline">Loading...</h2>
+                    <div class="article-domain" id="article-domain"></div>
+                    <div class="article-text" id="article-text"></div>
+                </div>
+                <div class="article-actions">
+                    <button class="action-btn not-clean-btn" id="not-clean-btn" onclick="onNotClean()" title="Mark as needing cleaning">Cleaning needed</button>
+                    <button class="action-btn skip-btn" id="skip-btn" onclick="onSkip()">Skip &raquo;</button>
+                </div>
+            </div>
+
+            <!-- Lower half: Category grid -->
+            <div class="category-grid">
+                {% for cat in categories %}
+                {% if cat == "Andere" %}
+                <button class="category-box andere" data-category="{{ cat }}" onclick="onCategoryClick('{{ cat }}')">
+                    <span class="cat-name">{{ cat }}</span>
+                    <div class="cat-stats">
+                        <span class="cat-session" id="stat-session-{{ loop.index0 }}">0 of 0</span>
+                        <span class="cat-total" id="stat-total-{{ loop.index0 }}">total: 0</span>
+                    </div>
+                </button>
+                {% else %}
+                <button class="category-box" data-category="{{ cat }}" onclick="onCategoryClick('{{ cat }}')">
+                    <span class="cat-name">{{ cat }}</span>
+                    <div class="cat-stats">
+                        <span class="cat-session" id="stat-session-{{ loop.index0 }}">0 of 0</span>
+                        <span class="cat-total" id="stat-total-{{ loop.index0 }}">total: 0</span>
+                    </div>
+                </button>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar (only if domain balanced) -->
+        {% if domain_balanced %}
+        <div class="sidebar" id="sidebar">
+            <h3>Domain Distribution</h3>
+            <div class="domain-list" id="domain-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const CATEGORIES = {{ categories | tojson }};
+        const DOMAIN_BALANCED = {{ domain_balanced | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/labeling.js') }}"></script>
+</body>
+</html>
