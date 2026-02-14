@@ -47,9 +47,33 @@
                     {% for cat in categories %}
                     <div class="personalised-row">
                         <label>{{ cat }}:</label>
+                        <span class="existing-count">{{ category_counts.get(cat, 0) }} existing</span>
                         <input type="number" class="cat-target number-input" data-category="{{ cat }}" min="0" value="100">
                     </div>
                     {% endfor %}
+                </div>
+
+                <div class="normalise-section" id="normalise-section" style="display: none;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="normalise-check" onchange="toggleNormalise()">
+                        Normalise (bring every category to the same total)
+                    </label>
+                    <p class="hint-text">Set a target total per category. Session targets are calculated as: target - existing labels.</p>
+                    <div id="normalise-input" style="display: none;">
+                        <div class="normalise-target-row">
+                            <label for="normalise-count">Target total per category:</label>
+                            <input type="number" id="normalise-count" min="1" value="200" class="number-input" oninput="updateNormalisePreview()">
+                        </div>
+                        <div class="normalise-preview" id="normalise-preview">
+                            {% for cat in categories %}
+                            <div class="normalise-preview-row" data-category="{{ cat }}">
+                                <span class="np-cat">{{ cat }}</span>
+                                <span class="np-existing">{{ category_counts.get(cat, 0) }} existing</span>
+                                <span class="np-needed" id="np-needed-{{ loop.index0 }}">--</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -82,10 +106,43 @@
             document.getElementById('config-panel').style.display = 'block';
         }
 
+        const EXISTING_COUNTS = {{ category_counts | tojson }};
+        const CATEGORIES = {{ categories | tojson }};
+
         function toggleTargetMode() {
             const mode = document.querySelector('input[name="target-mode"]:checked').value;
             document.getElementById('uniform-input').style.display = mode === 'uniform' ? 'block' : 'none';
             document.getElementById('personalised-input').style.display = mode === 'personalised' ? 'block' : 'none';
+            document.getElementById('normalise-section').style.display = mode === 'personalised' ? 'block' : 'none';
+        }
+
+        function toggleNormalise() {
+            const checked = document.getElementById('normalise-check').checked;
+            document.getElementById('normalise-input').style.display = checked ? 'block' : 'none';
+            // Disable individual inputs when normalise is on
+            document.querySelectorAll('.cat-target').forEach(input => {
+                input.disabled = checked;
+                input.style.opacity = checked ? '0.4' : '1';
+            });
+            if (checked) updateNormalisePreview();
+        }
+
+        function updateNormalisePreview() {
+            const target = parseInt(document.getElementById('normalise-count').value) || 0;
+            CATEGORIES.forEach((cat, idx) => {
+                const existing = EXISTING_COUNTS[cat] || 0;
+                const needed = Math.max(0, target - existing);
+                const el = document.getElementById('np-needed-' + idx);
+                if (el) {
+                    if (needed === 0) {
+                        el.textContent = 'already met (' + existing + '/' + target + ')';
+                        el.className = 'np-needed np-met';
+                    } else {
+                        el.textContent = needed + ' needed (' + existing + '/' + target + ')';
+                        el.className = 'np-needed np-remaining';
+                    }
+                }
+            });
         }
 
         async function startSession() {
@@ -109,11 +166,22 @@
                 }
                 config.count = count;
             } else {
-                const targets = {};
-                document.querySelectorAll('.cat-target').forEach(input => {
-                    targets[input.dataset.category] = parseInt(input.value) || 0;
-                });
-                config.targets = targets;
+                const normalise = document.getElementById('normalise-check').checked;
+                if (normalise) {
+                    const normCount = parseInt(document.getElementById('normalise-count').value);
+                    if (!normCount || normCount < 1) {
+                        alert('Please enter a valid normalise target.');
+                        return;
+                    }
+                    config.normalise = true;
+                    config.normalise_count = normCount;
+                } else {
+                    const targets = {};
+                    document.querySelectorAll('.cat-target').forEach(input => {
+                        targets[input.dataset.category] = parseInt(input.value) || 0;
+                    });
+                    config.targets = targets;
+                }
             }
 
             const resp = await fetch('/start-session', {

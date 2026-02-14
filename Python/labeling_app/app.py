@@ -1,6 +1,7 @@
 import csv
 import os
 import sys
+import threading
 
 from flask import Flask, jsonify, render_template, request
 
@@ -14,6 +15,7 @@ app = Flask(__name__)
 # Global session state (single-user local app)
 session_obj = None
 db_conn = None
+db_lock = threading.Lock()
 existing_category_counts = {}
 total_already_labeled = 0
 
@@ -32,6 +34,7 @@ def index():
         "index.html",
         already_labeled=total_already_labeled,
         categories=CATEGORIES,
+        category_counts=existing_category_counts,
     )
 
 
@@ -39,7 +42,8 @@ def index():
 def start_session():
     global session_obj
     config = request.json
-    session_obj = LabelingSession(db_conn, config, existing_category_counts)
+    with db_lock:
+        session_obj = LabelingSession(db_conn, config, existing_category_counts)
     return jsonify({"status": "ok"})
 
 
@@ -50,6 +54,7 @@ def label_page():
             "index.html",
             already_labeled=total_already_labeled,
             categories=CATEGORIES,
+            category_counts=existing_category_counts,
         )
     return render_template(
         "labeling.html",
@@ -62,10 +67,14 @@ def label_page():
 def get_article():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
-    article = session_obj.next_article()
-    if article is None:
-        return jsonify({"done": True})
-    return jsonify(article)
+    with db_lock:
+        stats = session_obj.get_stats()
+        if stats["all_done"]:
+            return jsonify({"done": True, "all_done": True})
+        article = session_obj.next_article()
+        if article is None:
+            return jsonify({"done": True, "all_done": False})
+        return jsonify(article)
 
 
 @app.route("/api/label", methods=["POST"])
@@ -73,10 +82,12 @@ def label_article():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
     data = request.json
-    stats = session_obj.apply_label(data["article_id"], data["label"])
-    next_art = session_obj.next_article()
-    done = next_art is None or stats["all_done"]
-    return jsonify({"stats": stats, "next_article": next_art, "done": done})
+    with db_lock:
+        stats = session_obj.apply_label(data["article_id"], data["label"])
+        next_art = session_obj.next_article()
+    all_done = stats["all_done"]
+    no_more = next_art is None and not all_done
+    return jsonify({"stats": stats, "next_article": next_art, "done": all_done, "no_more": no_more})
 
 
 @app.route("/api/skip", methods=["POST"])
@@ -84,8 +95,9 @@ def skip_article():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
     data = request.json
-    stats = session_obj.skip(data["article_id"])
-    next_art = session_obj.next_article()
+    with db_lock:
+        stats = session_obj.skip(data["article_id"])
+        next_art = session_obj.next_article()
     if next_art is None:
         return jsonify({"done": True, "stats": stats})
     return jsonify({"next_article": next_art, "stats": stats})
@@ -96,8 +108,9 @@ def not_clean():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
     data = request.json
-    stats = session_obj.mark_not_clean(data["article_id"])
-    next_art = session_obj.next_article()
+    with db_lock:
+        stats = session_obj.mark_not_clean(data["article_id"])
+        next_art = session_obj.next_article()
     if next_art is None:
         return jsonify({"done": True, "stats": stats})
     return jsonify({"next_article": next_art, "stats": stats})
@@ -107,7 +120,8 @@ def not_clean():
 def redo():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
-    result = session_obj.undo_last()
+    with db_lock:
+        result = session_obj.undo_last()
     return jsonify(result)
 
 
@@ -117,9 +131,10 @@ def search():
         return jsonify({"error": "No session active"}), 400
     data = request.json
     query = data.get("query", "").strip()
-    session_obj.set_search(query if query else None)
-    article = session_obj.next_article()
-    stats = session_obj.get_stats()
+    with db_lock:
+        session_obj.set_search(query if query else None)
+        article = session_obj.next_article()
+        stats = session_obj.get_stats()
     if article is None:
         return jsonify({"done": True, "stats": stats, "no_results": True})
     return jsonify({"next_article": article, "stats": stats})
@@ -130,8 +145,9 @@ def save():
     global total_already_labeled, existing_category_counts
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
-    count = session_obj.save_to_csv()
-    total_already_labeled, existing_category_counts = load_labeled_ids(db_conn)
+    with db_lock:
+        count = session_obj.save_to_csv()
+        total_already_labeled, existing_category_counts = load_labeled_ids(db_conn)
     return jsonify({"status": "saved", "count": count, "total": total_already_labeled})
 
 
@@ -154,7 +170,8 @@ def emergency_save():
 def stats():
     if session_obj is None:
         return jsonify({"error": "No session active"}), 400
-    return jsonify(session_obj.get_stats())
+    with db_lock:
+        return jsonify(session_obj.get_stats())
 
 
 if __name__ == "__main__":

@@ -61,8 +61,16 @@ def ensure_database():
 
 
 def get_connection():
-    """Return a new SQLite connection to the articles database."""
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    """Return a new SQLite connection to the articles database.
+
+    Uses WAL mode for better concurrent read/write behaviour and
+    serialized thread mode so a single connection can be safely
+    shared across Flask's threaded request handling.
+    """
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
 
 
 def load_labeled_ids(conn):

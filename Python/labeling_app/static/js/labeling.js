@@ -8,8 +8,10 @@ async function init() {
 
     const artResp = await fetch('/api/article');
     const article = await artResp.json();
-    if (article.done) {
+    if (article.done && article.all_done) {
         showCongratulations(stats.total_session);
+    } else if (article.done) {
+        showNoMoreArticles();
     } else {
         renderArticle(article);
     }
@@ -106,6 +108,8 @@ async function onCategoryClick(label) {
 
     if (data.done) {
         showCongratulations(data.stats.total_session);
+    } else if (data.no_more) {
+        showNoMoreArticles();
     } else if (data.next_article) {
         renderArticle(data.next_article);
     }
@@ -183,6 +187,15 @@ function showCongratulations(count) {
     document.getElementById('congrats-count').textContent =
         count + ' articles labeled in this session.';
     document.getElementById('congrats-overlay').style.display = 'flex';
+}
+
+function showNoMoreArticles() {
+    document.getElementById('article-headline').textContent = 'No more articles available';
+    document.getElementById('article-domain').textContent = '';
+    document.getElementById('article-text').textContent =
+        'There are no more articles to show right now, but your labeling targets have not been fully met yet. ' +
+        'Try switching to Random mode, changing your search query, or save and exit.';
+    currentArticleId = null;
 }
 
 // ===== Search Mode =====

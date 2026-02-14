@@ -59,3 +59,15 @@ __pycache__/
 *.pyc
 *.pyo
 Python/labeling_app/venv/
+
+# Secrets and tokens
+.env
+.env.*
+*.token
+*credentials*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Classification pipeline outputs
+*.csv

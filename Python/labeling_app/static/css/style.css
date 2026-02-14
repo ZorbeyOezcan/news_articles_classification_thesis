@@ -143,6 +143,77 @@ body {
     min-width: 220px;
 }
 
+/* Existing count badge in personalised rows */
+.existing-count {
+    font-size: 13px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 2px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+/* Normalise section */
+.normalise-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.normalise-target-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.normalise-preview {
+    margin-top: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.normalise-preview-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.normalise-preview-row:last-child {
+    border-bottom: none;
+}
+
+.np-cat {
+    font-weight: 600;
+    min-width: 200px;
+    color: #333;
+}
+
+.np-existing {
+    color: #6b7280;
+    min-width: 100px;
+    text-align: center;
+}
+
+.np-needed {
+    min-width: 160px;
+    text-align: right;
+    font-weight: 500;
+}
+
+.np-met {
+    color: #059669;
+}
+
+.np-remaining {
+    color: #2563eb;
+}
+
 .config-checkboxes .checkbox-label {
     margin-top: 12px;
 }

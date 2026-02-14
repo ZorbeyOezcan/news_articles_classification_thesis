@@ -31,7 +31,13 @@ class LabelingSession:
         self.existing_counts = {cat: existing_category_counts.get(cat, 0) for cat in CATEGORIES}
 
         # Targets per category for THIS session
-        if config["mode"] == "uniform":
+        if config.get("normalise"):
+            norm_target = config["normalise_count"]
+            self.targets = {
+                cat: max(0, norm_target - self.existing_counts.get(cat, 0))
+                for cat in CATEGORIES
+            }
+        elif config["mode"] == "uniform":
             self.targets = {cat: config["count"] for cat in CATEGORIES}
         else:
             self.targets = {cat: config["targets"].get(cat, 0) for cat in CATEGORIES}
