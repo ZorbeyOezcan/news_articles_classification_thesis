@@ -51,6 +51,22 @@ DEFAULT_HYPOTHESIS_TEMPLATE: str = "Dieser Text handelt von {}."
 
 DATASET_ID: str = "Zorryy/news_articles_2025_elections_germany"
 
+DEFAULT_LABEL_MAPPING: Dict[str, str] = {
+    "Klima / Energie": "Klima / Energie",
+    "Zuwanderung": "Zuwanderung",
+    "Renten": "Renten",
+    "Soziales Gefälle": "Soziales Gefälle",
+    "AfD/Rechte": "AfD/Rechte",
+    "Arbeitslosigkeit": "Arbeitslosigkeit",
+    "Wirtschaftslage": "Wirtschaftslage",
+    "Politikverdruss": "Politikverdruss",
+    "Gesundheitswesen, Pflege": "Gesundheitswesen, Pflege",
+    "Kosten/Löhne/Preise": "Kosten/Löhne/Preise",
+    "Ukraine/Krieg/Russland": "Ukraine/Krieg/Russland",
+    "Bundeswehr/Verteidigung": "Bundeswehr/Verteidigung",
+    "Andere": "Andere",
+}
+
 _DRIVE_REPORTS = Path("/content/drive/MyDrive/thesis_reports/performance_reports")
 _LOCAL_REPORTS = Path(__file__).parent / "performance_reports"
 
@@ -116,6 +132,158 @@ def get_test_df() -> pd.DataFrame:
 
 def get_raw_df() -> Optional[pd.DataFrame]:
     return get_runtime_data()["raw"]
+
+
+# ---------------------------------------------------------------------------
+# DATA LOADING (self-contained — no init_data.ipynb needed)
+# ---------------------------------------------------------------------------
+
+
+def load_data(
+    split_mode: str = "percentage",
+    eval_fraction: float = 0.2,
+    eval_per_class: int = 10,
+    random_seed: int = 42,
+    load_raw: bool = False,
+    label_mapping: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    """Load dataset from HuggingFace, apply label mapping, create train/eval/test splits.
+
+    Each notebook calls this once — no shared runtime state needed.
+
+    Args:
+        split_mode: "percentage" (eval_fraction of train) or "absolute" (eval_per_class per label).
+        eval_fraction: Fraction of train data for eval (only if split_mode="percentage").
+        eval_per_class: Exact number of eval samples per class (only if split_mode="absolute").
+        random_seed: Seed for reproducible splits.
+        load_raw: If True, also load the ~259k unlabeled raw split.
+        label_mapping: Dict mapping original labels to new names. None = DEFAULT_LABEL_MAPPING.
+
+    Returns:
+        Dict with keys: 'train', 'eval', 'test', 'raw', 'split_config', 'label_mapping'
+    """
+    from datasets import load_dataset
+    from sklearn.model_selection import train_test_split
+
+    if label_mapping is None:
+        label_mapping = dict(DEFAULT_LABEL_MAPPING)
+
+    # --- Load from HuggingFace ---
+    ds = load_dataset(DATASET_ID)
+
+    test_df = ds["test"].to_pandas()
+    train_full_df = ds["train"].to_pandas()
+
+    raw_df = None
+    if load_raw:
+        raw_df = ds["raw"].to_pandas()
+        print(f"Raw:   {len(raw_df):>7} Artikel (unlabeled)")
+    else:
+        print("Raw-Daten nicht geladen (load_raw=False)")
+
+    print(f"Test:  {len(test_df):>7} Artikel (FROZEN)")
+    print(f"Train: {len(train_full_df):>7} Artikel (wird in Train + Eval aufgeteilt)")
+
+    # --- Apply label mapping ---
+    def _apply_mapping(df: pd.DataFrame) -> pd.DataFrame:
+        if "label" not in df.columns:
+            return df
+        original_labels = set(df["label"].unique())
+        missing = original_labels - set(label_mapping.keys())
+        if missing:
+            print(f"  WARNUNG: Labels ohne Mapping: {missing}")
+        df = df.copy()
+        df["label"] = df["label"].map(label_mapping).fillna(df["label"])
+        return df
+
+    test_df = _apply_mapping(test_df)
+    train_full_df = _apply_mapping(train_full_df)
+    if raw_df is not None and "label" in raw_df.columns:
+        raw_df = _apply_mapping(raw_df)
+
+    remapped = {k: v for k, v in label_mapping.items() if k != v}
+    if remapped:
+        print("Label-Mapping Änderungen:")
+        for orig, new in remapped.items():
+            print(f"  {orig} → {new}")
+
+    # --- Train / Eval split ---
+    if split_mode == "percentage":
+        class_counts = train_full_df["label"].value_counts()
+        small_classes = class_counts[class_counts < 2].index.tolist()
+
+        if small_classes:
+            print(f"Klassen mit <2 Artikeln (komplett in Train): {small_classes}")
+            mask_small = train_full_df["label"].isin(small_classes)
+            splittable_df = train_full_df[~mask_small]
+            small_df = train_full_df[mask_small]
+
+            train_df, eval_df = train_test_split(
+                splittable_df,
+                test_size=eval_fraction,
+                stratify=splittable_df["label"],
+                random_state=random_seed,
+            )
+            train_df = pd.concat([train_df, small_df])
+        else:
+            train_df, eval_df = train_test_split(
+                train_full_df,
+                test_size=eval_fraction,
+                stratify=train_full_df["label"],
+                random_state=random_seed,
+            )
+
+    elif split_mode == "absolute":
+        eval_parts, train_parts = [], []
+        for label in train_full_df["label"].unique():
+            class_df = train_full_df[train_full_df["label"] == label]
+            n = min(len(class_df), eval_per_class)
+            if n < 2:
+                print(f"  {label}: nur {len(class_df)} Artikel -> komplett in Train")
+                train_parts.append(class_df)
+                continue
+            eval_sample = class_df.sample(n=n, random_state=random_seed)
+            eval_parts.append(eval_sample)
+            train_parts.append(class_df.drop(eval_sample.index))
+        eval_df = pd.concat(eval_parts).reset_index(drop=True)
+        train_df = pd.concat(train_parts).reset_index(drop=True)
+
+    else:
+        raise ValueError(f"Ungültiger split_mode: {split_mode}. Nutze 'percentage' oder 'absolute'.")
+
+    train_df = train_df.reset_index(drop=True)
+    eval_df = eval_df.reset_index(drop=True)
+
+    print(f"\nTrain: {len(train_df):>6} Artikel")
+    print(f"Eval:  {len(eval_df):>6} Artikel")
+    print(f"Test:  {len(test_df):>6} Artikel (FROZEN)")
+
+    split_config = {
+        "dataset_id": DATASET_ID,
+        "split_mode": split_mode,
+        "eval_fraction": eval_fraction if split_mode == "percentage" else None,
+        "eval_per_class": eval_per_class if split_mode == "absolute" else None,
+        "random_seed": random_seed,
+        "load_raw": load_raw,
+        "train_size": len(train_df),
+        "eval_size": len(eval_df),
+        "test_size": len(test_df),
+        "raw_size": len(raw_df) if raw_df is not None else 0,
+    }
+
+    result = {
+        "train": train_df,
+        "eval": eval_df,
+        "test": test_df,
+        "raw": raw_df,
+        "split_config": split_config,
+        "label_mapping": label_mapping,
+    }
+
+    # Also populate runtime cache for backwards compatibility
+    set_runtime_data(train_df, eval_df, test_df, raw_df, split_config, label_mapping)
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -465,8 +633,14 @@ def generate_report(
     experiment_notes: str = "",
     training_params: Optional[Dict[str, Any]] = None,
     uploaded_model_url: Optional[str] = None,
+    split_config: Optional[Dict[str, Any]] = None,
+    label_mapping: Optional[Dict[str, str]] = None,
 ) -> str:
     """Generate a standardized Markdown report + JSON sidecar.
+
+    Args:
+        split_config: Dict from load_data()['split_config']. If None, falls back to runtime cache.
+        label_mapping: Dict from load_data()['label_mapping']. If None, falls back to runtime cache.
 
     Returns absolute path to the saved .md report file.
     """
@@ -479,11 +653,16 @@ def generate_report(
     md_path = REPORTS_DIR / f"{base_name}.md"
     json_path = REPORTS_DIR / f"{base_name}.json"
 
-    # Gather split info from runtime data if available
+    # Gather split info: prefer direct parameter, fall back to runtime cache
+    sc = split_config
+    if sc is None:
+        try:
+            sc = get_runtime_data().get("split_config", {})
+        except RuntimeError:
+            sc = {}
+
     split_info = {}
-    try:
-        data = get_runtime_data()
-        sc = data.get("split_config", {})
+    if sc:
         split_info = {
             "n_train": sc.get("train_size", "N/A"),
             "n_eval": sc.get("eval_size", "N/A"),
@@ -500,14 +679,14 @@ def generate_report(
             "eval_per_class": sc.get("eval_per_class"),
             "random_seed": sc.get("random_seed", "N/A"),
         }
-    except RuntimeError:
-        split_info = {"note": "Runtime data not available — splits unknown."}
+    else:
+        split_info = {"note": "Split info not available."}
 
-    label_mapping = {}
-    try:
-        label_mapping = get_runtime_data().get("label_mapping", {})
-    except RuntimeError:
-        pass
+    if label_mapping is None:
+        try:
+            label_mapping = get_runtime_data().get("label_mapping", {})
+        except RuntimeError:
+            label_mapping = {}
 
     used_labels = candidate_labels or metrics.get("labels", DEFAULT_CANDIDATE_LABELS)
     used_template = hypothesis_template or DEFAULT_HYPOTHESIS_TEMPLATE
