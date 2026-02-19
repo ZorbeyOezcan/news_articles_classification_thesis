@@ -58,7 +58,8 @@ data/
 __pycache__/
 *.pyc
 *.pyo
-Python/labeling_app/venv/
+.venv/
+venv/
 
 # Secrets and tokens
 .env
@@ -71,3 +72,4 @@ Python/labeling_app/venv/
 
 # Classification pipeline outputs
 *.csv
+Python/classification_pipeline/performance_reports/

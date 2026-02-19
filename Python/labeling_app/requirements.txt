@@ -1,2 +1,4 @@
 flask>=3.0
 pandas>=2.0
+datasets>=2.14
+huggingface_hub>=0.19
