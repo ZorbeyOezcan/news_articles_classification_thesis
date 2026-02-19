@@ -728,20 +728,35 @@ def generate_report(
         "|---|---|",
         f"| Hypothesis Template | `{used_template}` |",
         f"| Num Labels | {len(used_labels)} |",
-        f"| Candidate Labels | {', '.join(used_labels)} |",
     ]
 
-    # Label Mapping (only if any label was actually remapped)
+    # Detaillierte Label-Tabelle mit NLI-Phrasen
     remapped = {k: v for k, v in label_mapping.items() if k != v}
     if remapped:
         lines += [
             "",
-            "## Label Mapping (remapped)",
-            "| Original | New |",
-            "|---|---|",
+            "## Candidate Labels & NLI Phrases",
+            "| # | Original | Candidate Label | NLI Phrase |",
+            "|---|---|---|---|",
         ]
-        for orig, new in remapped.items():
-            lines.append(f"| {orig} | {new} |")
+        reverse_map = {v: k for k, v in label_mapping.items()}
+        for i, label in enumerate(used_labels, 1):
+            orig = reverse_map.get(label, label)
+            nli_phrase = used_template.format(label)
+            if orig != label:
+                lines.append(f"| {i} | {orig} | {label} | {nli_phrase} |")
+            else:
+                lines.append(f"| {i} | — | {label} | {nli_phrase} |")
+    else:
+        lines += [
+            "",
+            "## Candidate Labels & NLI Phrases",
+            "| # | Candidate Label | NLI Phrase |",
+            "|---|---|---|",
+        ]
+        for i, label in enumerate(used_labels, 1):
+            nli_phrase = used_template.format(label)
+            lines.append(f"| {i} | {label} | {nli_phrase} |")
 
     # Dataset info
     lines += [
@@ -845,6 +860,7 @@ def generate_report(
         "classification_config": {
             "hypothesis_template": used_template,
             "candidate_labels": used_labels,
+            "nli_phrases": [used_template.format(l) for l in used_labels],
             "label_mapping": label_mapping,
             "label_mapping_remapped": remapped if remapped else None,
         },
