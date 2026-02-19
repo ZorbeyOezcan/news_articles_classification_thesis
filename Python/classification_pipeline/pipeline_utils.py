@@ -287,6 +287,43 @@ def load_data(
 
 
 # ---------------------------------------------------------------------------
+# MODEL CONFIG EXTRACTION
+# ---------------------------------------------------------------------------
+
+# Fields to extract from HuggingFace model config.json
+_MODEL_CONFIG_FIELDS = [
+    "architectures",
+    "model_type",
+    "hidden_size",
+    "num_hidden_layers",
+    "num_attention_heads",
+    "vocab_size",
+    "max_position_embeddings",
+]
+
+
+def extract_model_config(classifier) -> Dict[str, Any]:
+    """Extract key architecture fields from a HuggingFace pipeline's model config.
+
+    Args:
+        classifier: A transformers.Pipeline object (e.g. from ``pipeline("zero-shot-classification", ...)``).
+
+    Returns:
+        Dict with architecture fields (only those present in the model config).
+    """
+    config = classifier.model.config.to_dict()
+    extracted = {}
+    for field in _MODEL_CONFIG_FIELDS:
+        if field in config:
+            val = config[field]
+            # architectures is a list, join for display
+            if field == "architectures" and isinstance(val, list):
+                val = val[0] if len(val) == 1 else ", ".join(val)
+            extracted[field] = val
+    return extracted
+
+
+# ---------------------------------------------------------------------------
 # EXPERIMENT TIMER
 # ---------------------------------------------------------------------------
 
@@ -635,6 +672,7 @@ def generate_report(
     uploaded_model_url: Optional[str] = None,
     split_config: Optional[Dict[str, Any]] = None,
     label_mapping: Optional[Dict[str, str]] = None,
+    model_config: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Generate a standardized Markdown report + JSON sidecar.
 
@@ -719,6 +757,27 @@ def generate_report(
         lines.append(f"| Notes | {model_info['notes']} |")
     if uploaded_model_url:
         lines.append(f"| Uploaded Model | {uploaded_model_url} |")
+
+    # Model Architecture (from config.json)
+    if model_config:
+        _CONFIG_DISPLAY = {
+            "architectures": "Architecture",
+            "model_type": "Model Type",
+            "hidden_size": "Hidden Size",
+            "num_hidden_layers": "Num Layers",
+            "num_attention_heads": "Attention Heads",
+            "vocab_size": "Vocab Size",
+            "max_position_embeddings": "Max Position Embeddings",
+        }
+        lines += [
+            "",
+            "## Model Architecture",
+            "| Property | Value |",
+            "|---|---|",
+        ]
+        for key, display_name in _CONFIG_DISPLAY.items():
+            if key in model_config:
+                lines.append(f"| {display_name} | {model_config[key]} |")
 
     # NLI / Classification Config
     lines += [
@@ -856,6 +915,7 @@ def generate_report(
             "name": model_name,
             "type": model_type,
             **{k: v for k, v in model_info.items()},
+            "config": model_config,
         },
         "classification_config": {
             "hypothesis_template": used_template,
