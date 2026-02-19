@@ -51,7 +51,11 @@ DEFAULT_HYPOTHESIS_TEMPLATE: str = "Dieser Text handelt von {}."
 
 DATASET_ID: str = "Zorryy/news_articles_2025_elections_germany"
 
-REPORTS_DIR: Path = Path(__file__).parent / "performance_reports"
+_DRIVE_REPORTS = Path("/content/drive/MyDrive/thesis_reports/performance_reports")
+_LOCAL_REPORTS = Path(__file__).parent / "performance_reports"
+
+# Google Drive if mounted (persistent), otherwise local (lost after session)
+REPORTS_DIR: Path = _DRIVE_REPORTS if _DRIVE_REPORTS.parent.exists() else _LOCAL_REPORTS
 
 
 # ---------------------------------------------------------------------------
