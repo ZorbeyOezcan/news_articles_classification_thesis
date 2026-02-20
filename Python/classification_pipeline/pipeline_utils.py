@@ -628,12 +628,13 @@ def _estimate_cost_per_1000(
     """Estimate Colab compute cost per 1000 articles.
 
     Approximate Colab Pro credit rates:
-      T4:   ~1.5 compute units/hour
-      A100: ~10.5 compute units/hour
+      T4:   ~1.41 compute units/hour
+      L4:   ~1.71 compute units/hour
+      A100: ~7.52 compute units/hour
       V100: ~3.3 compute units/hour
     1 compute unit ~ $0.10 USD (approximate).
     """
-    rates = {"T4": 1.5, "A100": 10.5, "V100": 3.3, "L4": 2.5}
+    rates = {"T4": 1.41, "A100": 7.52, "V100": 3.3, "L4": 1.71}
     cu_per_hour = rates.get(gpu_type, 1.5)
 
     if n_articles == 0 or timer.duration_seconds == 0:
