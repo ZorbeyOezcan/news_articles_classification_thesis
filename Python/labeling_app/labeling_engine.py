@@ -393,11 +393,19 @@ def _parse_search_query(query):
 
         if ttype == "NOT_TERM":
             cond = "LOWER(text) NOT LIKE ?"
-            params.append(f"%{tval.lower()}%")
+            # Support wildcard * (e.g. -Migrat* excludes migration, migranten, etc.)
+            like_val = tval.lower().replace("*", "%")
+            if "%" not in like_val:
+                like_val = f"%{like_val}%"
+            params.append(like_val)
         else:
             # TERM or PHRASE
             cond = "LOWER(text) LIKE ?"
-            params.append(f"%{tval.lower()}%")
+            # Support wildcard * (e.g. Migrat* matches migration, migranten, etc.)
+            like_val = tval.lower().replace("*", "%")
+            if "%" not in like_val:
+                like_val = f"%{like_val}%"
+            params.append(like_val)
 
         if conditions:
             conditions.append(pending_op)

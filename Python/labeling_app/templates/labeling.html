@@ -48,9 +48,9 @@
 
             <!-- Search bar (hidden by default) -->
             <div class="search-bar" id="search-bar" style="display: none;">
-                <input type="text" id="search-input" placeholder='Search articles... (e.g. Klima AND Energie, "exact phrase", -exclude)' />
+                <input type="text" id="search-input" placeholder='Search articles... (e.g. Migrat*, Klima AND Energie, "exact phrase", -exclude)' />
                 <button class="search-go-btn" onclick="onSearch()">Search</button>
-                <span class="search-hint">Supports: AND, OR, NOT / -term, "exact phrase"</span>
+                <span class="search-hint">Supports: Wildcard* (stem search), AND, OR, NOT / -term, "exact phrase"</span>
             </div>
 
             <!-- Upper half: Article display -->

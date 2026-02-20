@@ -94,7 +94,10 @@ def load_labeled_ids(conn):
         # Count per category
         rows = conn.execute("SELECT label, COUNT(*) FROM labeled GROUP BY label").fetchall()
         category_counts = {r[0]: r[1] for r in rows}
-        total = conn.execute("SELECT COUNT(*) FROM labeled").fetchone()[0]
+        # Exclude 'skipped' and 'not_clean' from the total count
+        total = conn.execute(
+            "SELECT COUNT(*) FROM labeled WHERE label NOT IN ('skipped', 'not_clean')"
+        ).fetchone()[0]
         return total, category_counts
 
     return 0, {}
