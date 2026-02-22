@@ -742,3 +742,281 @@ body {
     padding: 14px 40px;
     font-size: 18px;
 }
+
+/* ===== Cleaning Mode ===== */
+.cleaning-screen {
+    overflow: hidden;
+}
+
+/* Clean source selection on start page */
+.clean-source-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.clean-source-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clean-source-option:hover:not(.disabled) {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.clean-source-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.clean-source-option input[type="radio"] {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+}
+
+.source-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.source-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.source-desc {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.source-missing {
+    font-size: 12px;
+    color: #dc2626;
+    font-style: italic;
+}
+
+/* Source badge in header */
+.clean-source-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+}
+
+.badge-umap {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-cleanlab {
+    background: #fce7f3;
+    color: #9d174d;
+}
+
+/* Article panel layout for cleaning (article + quality signals side by side) */
+.clean-article-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.clean-article-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.clean-article-layout .article-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Quality signals panel */
+.quality-panel {
+    width: 260px;
+    min-width: 260px;
+    padding: 16px;
+    border-left: 2px solid #e5e7eb;
+    background: #f9fafb;
+    overflow-y: auto;
+}
+
+.quality-panel h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+.signal-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.signal-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 4px;
+    letter-spacing: 0.3px;
+}
+
+.signal-value {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    word-break: break-word;
+}
+
+.signal-predicted {
+    color: #059669;
+}
+
+/* Quality score colors */
+.score-low {
+    color: #dc2626;
+}
+
+.score-mid {
+    color: #d97706;
+}
+
+.score-high {
+    color: #059669;
+}
+
+/* Score bar */
+.score-bar {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc2626, #d97706, #059669);
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+/* Cleaning actions */
+.clean-actions {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.keep-btn {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.keep-btn:hover {
+    background: #dcfce7;
+    color: #14532d;
+}
+
+.remove-btn {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.remove-btn:hover {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+/* Category grid in cleaning mode */
+.clean-category-grid .category-box {
+    position: relative;
+}
+
+.cat-confidence {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* Current label: grayed out */
+.category-box.current-label {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    opacity: 0.6;
+}
+
+.category-box.current-label .cat-name {
+    text-decoration: line-through;
+    color: #9ca3af;
+}
+
+.category-box.current-label:hover {
+    transform: none;
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+/* Suggested label (predicted by cleanlab) */
+.category-box.suggested {
+    border-color: #059669;
+    border-width: 3px;
+    background: #f0fdf4;
+}
+
+.category-box.suggested:hover {
+    background: #dcfce7;
+    border-color: #047857;
+}
+
+.category-box.suggested .cat-confidence {
+    color: #059669;
+    font-weight: 700;
+}
+
+/* Confidence levels */
+.category-box.conf-high {
+    opacity: 1;
+}
+
+.category-box.conf-mid {
+    opacity: 0.7;
+}
+
+.category-box.conf-low {
+    opacity: 0.45;
+}
+
+/* Override: suggested always fully visible */
+.category-box.suggested.conf-low,
+.category-box.suggested.conf-mid {
+    opacity: 1;
+}

@@ -17,11 +17,12 @@
         <div class="mode-selection" id="mode-selection">
             <h2>What do you want to do?</h2>
             <div class="mode-buttons">
-                <button class="mode-btn active-mode" onclick="showConfig()">Label new data</button>
-                <button class="mode-btn disabled-mode" disabled title="Coming soon">Clean already labelled data</button>
+                <button class="mode-btn" id="btn-label-mode" onclick="selectMode('label')">Label new data</button>
+                <button class="mode-btn" id="btn-clean-mode" onclick="selectMode('clean')">Clean already labelled data</button>
             </div>
         </div>
 
+        <!-- ===== LABELING CONFIG ===== -->
         <div class="config-panel" id="config-panel" style="display: none;">
             <h2>Configure Labeling Session</h2>
 
@@ -99,15 +100,114 @@
 
             <button class="start-btn" onclick="startSession()">Start Labeling</button>
         </div>
+
+        <!-- ===== CLEANING CONFIG ===== -->
+        <div class="config-panel" id="clean-config-panel" style="display: none;">
+            <h2>Configure Cleaning Session</h2>
+
+            <div class="config-section">
+                <h3>Choose data source</h3>
+                <div class="clean-source-options">
+                    <label class="clean-source-option {% if not clean_sources.umap.available %}disabled{% endif %}">
+                        <input type="radio" name="clean-source" value="umap"
+                            {% if not clean_sources.umap.available %}disabled{% endif %}
+                            {% if clean_sources.umap.available %}checked{% endif %}>
+                        <div class="source-info">
+                            <span class="source-name">UMAP Outlier Analysis</span>
+                            <span class="source-desc">Centroid Distance + Local Outlier Factor on embeddings</span>
+                            {% if not clean_sources.umap.available %}
+                            <span class="source-missing">Not available &mdash; run label_quality_check.ipynb first</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    <label class="clean-source-option {% if not clean_sources.cleanlab.available %}disabled{% endif %}">
+                        <input type="radio" name="clean-source" value="cleanlab"
+                            {% if not clean_sources.cleanlab.available %}disabled{% endif %}
+                            {% if clean_sources.cleanlab.available and not clean_sources.umap.available %}checked{% endif %}>
+                        <div class="source-info">
+                            <span class="source-name">Cleanlab Label Issues</span>
+                            <span class="source-desc">Confident Learning with per-class probabilities</span>
+                            {% if not clean_sources.cleanlab.available %}
+                            <span class="source-missing">Not available &mdash; run cleanlab_label_analysis.ipynb and copy output to cleanlab_output/</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="config-section" id="umap-filter-section">
+                <h3>Filter options</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="filter-both-methods">
+                    Only show articles flagged by BOTH methods (Centroid + LOF)
+                </label>
+                <p class="hint-text">When unchecked, articles flagged by either method are shown.</p>
+            </div>
+
+            <div class="config-section" id="cleanlab-filter-section" style="display: none;">
+                <h3>Filter options</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="filter-score-threshold" onchange="toggleScoreThreshold()">
+                    Only show articles below quality score threshold
+                </label>
+                <div id="score-threshold-input" style="display: none; margin-top: 8px;">
+                    <label for="score-threshold">Max quality score:</label>
+                    <input type="number" id="score-threshold" min="0" max="1" step="0.05" value="0.5" class="number-input">
+                </div>
+            </div>
+
+            <button class="start-btn" id="clean-start-btn" onclick="startCleaning()"
+                {% if not clean_sources.umap.available and not clean_sources.cleanlab.available %}disabled{% endif %}>
+                Start Cleaning
+            </button>
+            {% if not clean_sources.umap.available and not clean_sources.cleanlab.available %}
+            <p class="hint-text" style="margin-top: 8px; color: #dc2626;">No quality check results found. Run one of the analysis notebooks first.</p>
+            {% endif %}
+        </div>
     </div>
 
     <script>
-        function showConfig() {
-            document.getElementById('config-panel').style.display = 'block';
-        }
-
         const EXISTING_COUNTS = {{ category_counts | tojson }};
         const CATEGORIES = {{ categories | tojson }};
+
+        let currentMode = null;
+
+        function selectMode(mode) {
+            currentMode = mode;
+            // Update button styles
+            document.getElementById('btn-label-mode').classList.toggle('active-mode', mode === 'label');
+            document.getElementById('btn-clean-mode').classList.toggle('active-mode', mode === 'clean');
+
+            // Show/hide config panels
+            document.getElementById('config-panel').style.display = mode === 'label' ? 'block' : 'none';
+            document.getElementById('clean-config-panel').style.display = mode === 'clean' ? 'block' : 'none';
+
+            // Update source filter visibility
+            if (mode === 'clean') {
+                updateCleanFilterVisibility();
+            }
+        }
+
+        function showConfig() {
+            selectMode('label');
+        }
+
+        function updateCleanFilterVisibility() {
+            const selected = document.querySelector('input[name="clean-source"]:checked');
+            const source = selected ? selected.value : '';
+            document.getElementById('umap-filter-section').style.display = source === 'umap' ? 'block' : 'none';
+            document.getElementById('cleanlab-filter-section').style.display = source === 'cleanlab' ? 'block' : 'none';
+        }
+
+        // Listen for source radio changes
+        document.querySelectorAll('input[name="clean-source"]').forEach(radio => {
+            radio.addEventListener('change', updateCleanFilterVisibility);
+        });
+
+        function toggleScoreThreshold() {
+            const checked = document.getElementById('filter-score-threshold').checked;
+            document.getElementById('score-threshold-input').style.display = checked ? 'block' : 'none';
+        }
 
         function toggleTargetMode() {
             const mode = document.querySelector('input[name="target-mode"]:checked').value;
@@ -119,7 +219,6 @@
         function toggleNormalise() {
             const checked = document.getElementById('normalise-check').checked;
             document.getElementById('normalise-input').style.display = checked ? 'block' : 'none';
-            // Disable individual inputs when normalise is on
             document.querySelectorAll('.cat-target').forEach(input => {
                 input.disabled = checked;
                 input.style.opacity = checked ? '0.4' : '1';
@@ -194,6 +293,43 @@
                 window.location.href = '/label';
             } else {
                 alert('Failed to start session.');
+            }
+        }
+
+        async function startCleaning() {
+            const sourceEl = document.querySelector('input[name="clean-source"]:checked');
+            if (!sourceEl) {
+                alert('Please select a data source.');
+                return;
+            }
+
+            const source = sourceEl.value;
+            let config = { source: source };
+
+            if (source === 'umap') {
+                config.filter_both_methods = document.getElementById('filter-both-methods').checked;
+            } else if (source === 'cleanlab') {
+                const useThreshold = document.getElementById('filter-score-threshold').checked;
+                if (useThreshold) {
+                    config.score_threshold = parseFloat(document.getElementById('score-threshold').value) || 0.5;
+                }
+            }
+
+            const resp = await fetch('/start-cleaning', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(config)
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.total_flagged === 0) {
+                    alert('No flagged articles found with the selected filters.');
+                    return;
+                }
+                window.location.href = '/clean';
+            } else {
+                alert('Failed to start cleaning session.');
             }
         }
     </script>

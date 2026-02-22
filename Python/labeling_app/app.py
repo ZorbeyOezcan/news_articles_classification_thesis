@@ -9,11 +9,13 @@ csv.field_size_limit(sys.maxsize)
 
 from data_loader import ensure_database, get_connection, load_labeled_ids
 from labeling_engine import CATEGORIES, LabelingSession
+from cleaning_engine import CleaningSession, get_available_sources
 
 app = Flask(__name__)
 
 # Global session state (single-user local app)
 session_obj = None
+cleaning_session = None
 db_conn = None
 db_lock = threading.Lock()
 existing_category_counts = {}
@@ -30,11 +32,13 @@ def init_app():
 
 @app.route("/")
 def index():
+    sources = get_available_sources()
     return render_template(
         "index.html",
         already_labeled=total_already_labeled,
         categories=CATEGORIES,
         category_counts=existing_category_counts,
+        clean_sources=sources,
     )
 
 
@@ -172,6 +176,113 @@ def stats():
         return jsonify({"error": "No session active"}), 400
     with db_lock:
         return jsonify(session_obj.get_stats())
+
+
+# ===== Cleaning Mode Routes =====
+
+
+@app.route("/start-cleaning", methods=["POST"])
+def start_cleaning():
+    global cleaning_session
+    config = request.json
+    with db_lock:
+        cleaning_session = CleaningSession(db_conn, config)
+    return jsonify({"status": "ok", "total_flagged": cleaning_session.total})
+
+
+@app.route("/clean")
+def clean_page():
+    if cleaning_session is None:
+        return render_template(
+            "index.html",
+            already_labeled=total_already_labeled,
+            categories=CATEGORIES,
+            category_counts=existing_category_counts,
+            clean_sources=get_available_sources(),
+        )
+    return render_template(
+        "cleaning.html",
+        categories=CATEGORIES,
+        source=cleaning_session.source_type,
+    )
+
+
+@app.route("/api/clean/article")
+def get_clean_article():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    with db_lock:
+        stats = cleaning_session.get_stats()
+        if stats["all_done"]:
+            return jsonify({"done": True, "stats": stats})
+        article = cleaning_session.next_article()
+        if article is None:
+            return jsonify({"done": True, "stats": stats})
+        return jsonify({"article": article, "stats": stats})
+
+
+@app.route("/api/clean/relabel", methods=["POST"])
+def clean_relabel():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    data = request.json
+    with db_lock:
+        stats = cleaning_session.relabel(data["article_id"], data["new_label"])
+        next_art = cleaning_session.next_article()
+    return jsonify({"stats": stats, "next_article": next_art})
+
+
+@app.route("/api/clean/keep", methods=["POST"])
+def clean_keep():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    data = request.json
+    with db_lock:
+        stats = cleaning_session.keep(data["article_id"])
+        next_art = cleaning_session.next_article()
+    return jsonify({"stats": stats, "next_article": next_art})
+
+
+@app.route("/api/clean/skip", methods=["POST"])
+def clean_skip():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    data = request.json
+    with db_lock:
+        stats = cleaning_session.skip(data["article_id"])
+        next_art = cleaning_session.next_article()
+    return jsonify({"stats": stats, "next_article": next_art})
+
+
+@app.route("/api/clean/remove", methods=["POST"])
+def clean_remove():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    data = request.json
+    with db_lock:
+        stats = cleaning_session.remove_label(data["article_id"])
+        next_art = cleaning_session.next_article()
+    return jsonify({"stats": stats, "next_article": next_art})
+
+
+@app.route("/api/clean/undo", methods=["POST"])
+def clean_undo():
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    with db_lock:
+        result = cleaning_session.undo_last()
+    return jsonify(result)
+
+
+@app.route("/api/clean/save", methods=["POST"])
+def clean_save():
+    global total_already_labeled, existing_category_counts
+    if cleaning_session is None:
+        return jsonify({"error": "No cleaning session active"}), 400
+    with db_lock:
+        n_changes = cleaning_session.save_to_csv()
+        total_already_labeled, existing_category_counts = load_labeled_ids(db_conn)
+    return jsonify({"status": "saved", "changes": n_changes, "total": total_already_labeled})
 
 
 if __name__ == "__main__":

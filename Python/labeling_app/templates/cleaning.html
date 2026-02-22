@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Cleaning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="cleaning-screen">
+    <!-- Done overlay -->
+    <div class="overlay" id="done-overlay" style="display: none;">
+        <div class="overlay-content">
+            <h1>All Done!</h1>
+            <p>All flagged articles have been reviewed.</p>
+            <p id="done-summary"></p>
+            <button class="save-btn" onclick="saveAndExit()">Save &amp; Exit</button>
+        </div>
+    </div>
+
+    <div class="main-layout no-sidebar">
+        <div class="content-area">
+            <!-- Header bar -->
+            <div class="header-bar">
+                <div class="header-left">
+                    <button class="header-btn redo-btn" onclick="onUndo()">&#8630; Undo</button>
+                </div>
+                <div class="header-center">
+                    <div class="clean-source-badge" id="source-badge"></div>
+                    <div class="progress-info">
+                        <span id="progress-text">0 / 0</span>
+                        <div class="progress-bar-small">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="special-counts">
+                        <span class="special-count" id="relabeled-count" title="Relabeled this session">Relabeled: 0</span>
+                        <span class="special-count" id="kept-count" title="Kept as is">Kept: 0</span>
+                        <span class="special-count" id="removed-count" title="Labels removed">Removed: 0</span>
+                        <span class="special-count" id="skipped-count" title="Skipped">Skipped: 0</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn save-btn" onclick="onSave()">Save &amp; Exit</button>
+                </div>
+            </div>
+
+            <!-- Article panel with quality signals -->
+            <div class="article-panel clean-article-panel">
+                <div class="clean-article-layout">
+                    <div class="article-content" id="article-content">
+                        <h2 id="article-headline">Loading...</h2>
+                        <div class="article-domain" id="article-domain"></div>
+                        <div class="article-text" id="article-text"></div>
+                    </div>
+                    <div class="quality-panel" id="quality-panel">
+                        <h3>Quality Signals</h3>
+                        <div class="signal-card" id="signal-current-label">
+                            <span class="signal-label">Current Label</span>
+                            <span class="signal-value" id="signal-current-value">--</span>
+                        </div>
+                        <div class="signal-card" id="signal-source">
+                            <span class="signal-label">Source</span>
+                            <span class="signal-value" id="signal-source-value">--</span>
+                        </div>
+                        <div id="signal-details"></div>
+                    </div>
+                </div>
+                <div class="article-actions clean-actions">
+                    <button class="action-btn remove-btn" onclick="onRemove()" title="Remove label (R)">Remove Label</button>
+                    <button class="action-btn keep-btn" onclick="onKeep()" title="Keep current label (K)">Keep as is</button>
+                    <button class="action-btn skip-btn" onclick="onSkip()" title="Skip (S)">Skip &raquo;</button>
+                </div>
+            </div>
+
+            <!-- Category grid -->
+            <div class="category-grid clean-category-grid">
+                {% for cat in categories %}
+                {% if cat == "Andere" %}
+                <button class="category-box andere" data-category="{{ cat }}" onclick="onRelabel('{{ cat }}')">
+                    <span class="cat-name">{{ cat }}</span>
+                    <span class="cat-confidence" id="conf-{{ loop.index0 }}"></span>
+                </button>
+                {% else %}
+                <button class="category-box" data-category="{{ cat }}" onclick="onRelabel('{{ cat }}')">
+                    <span class="cat-name">{{ cat }}</span>
+                    <span class="cat-confidence" id="conf-{{ loop.index0 }}"></span>
+                </button>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CATEGORIES = {{ categories | tojson }};
+        const CLEANING_SOURCE = {{ source | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='js/cleaning.js') }}"></script>
+</body>
+</html>
