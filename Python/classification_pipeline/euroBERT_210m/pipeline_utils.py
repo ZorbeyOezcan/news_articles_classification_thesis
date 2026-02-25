@@ -1,8 +1,8 @@
 """
-pipeline_utils.py — Shared utilities for the German news classification pipeline.
+pipeline_utils.py -- Shared utilities for the EuroBERT-210m classification pipeline.
 
-All classify_*.ipynb notebooks import from this module.
-Provides: configuration, data access, evaluation, reporting, timing, and visualization.
+All pipeline notebooks (01-06) import from this module.
+Provides: configuration, data loading, evaluation, reporting, timing, and visualization.
 """
 
 import json
@@ -67,11 +67,26 @@ DEFAULT_LABEL_MAPPING: Dict[str, str] = {
     "Andere": "Andere",
 }
 
-_DRIVE_REPORTS = Path("/content/drive/MyDrive/thesis_reports/performance_reports")
-_LOCAL_REPORTS = Path(__file__).parent / "performance_reports"
+# ---------------------------------------------------------------------------
+# OUTPUT PATHS (Google Drive when on Colab, local fallback otherwise)
+# ---------------------------------------------------------------------------
 
-# Google Drive if mounted (persistent), otherwise local (lost after session)
-REPORTS_DIR: Path = _DRIVE_REPORTS if _DRIVE_REPORTS.parent.exists() else _LOCAL_REPORTS
+_DRIVE_BASE = Path("/content/drive/MyDrive/thesis_reports/euroBERT_210m")
+_LOCAL_BASE = Path(__file__).parent / "local_data"
+
+DRIVE_AVAILABLE: bool = _DRIVE_BASE.parent.exists()
+BASE_DIR: Path = _DRIVE_BASE if DRIVE_AVAILABLE else _LOCAL_BASE
+
+REPORTS_DIR: Path = BASE_DIR / "reports"
+OPTUNA_DB_DIR: Path = BASE_DIR / "optuna_db"
+CLASSIFICATION_OUTPUT_DIR: Path = BASE_DIR / "classification_output"
+VISUALIZATIONS_DIR: Path = BASE_DIR / "visualizations"
+
+
+def ensure_drive_dirs() -> None:
+    """Create all output directories on Google Drive (or locally) if needed."""
+    for d in [REPORTS_DIR, OPTUNA_DB_DIR, CLASSIFICATION_OUTPUT_DIR, VISUALIZATIONS_DIR]:
+        d.mkdir(parents=True, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -89,9 +104,9 @@ def set_runtime_data(
     split_config: Dict[str, Any],
     label_mapping: Dict[str, str],
 ) -> None:
-    """Store dataset splits in module-level cache for cross-notebook access.
+    """Store dataset splits in module-level cache.
 
-    Called by init_data.ipynb. All classify notebooks retrieve via get_runtime_data().
+    Called automatically by load_data(). Notebooks retrieve via get_runtime_data().
     """
     _runtime_data["train"] = train_df
     _runtime_data["eval"] = eval_df
@@ -113,7 +128,7 @@ def get_runtime_data() -> Dict[str, Any]:
     """
     if not _runtime_data:
         raise RuntimeError(
-            "No runtime data loaded. Run init_data.ipynb first in this session."
+            "No runtime data loaded. Call load_data() first in this session."
         )
     return _runtime_data
 
@@ -177,12 +192,12 @@ def load_data(
     raw_df = None
     if load_raw:
         raw_df = ds["raw"].to_pandas()
-        print(f"Raw:   {len(raw_df):>7} Artikel (unlabeled)")
+        print(f"Raw:   {len(raw_df):>7} articles (unlabeled)")
     else:
-        print("Raw-Daten nicht geladen (load_raw=False)")
+        print("Raw data not loaded (load_raw=False)")
 
-    print(f"Test:  {len(test_df):>7} Artikel (FROZEN)")
-    print(f"Train: {len(train_full_df):>7} Artikel (wird in Train + Eval aufgeteilt)")
+    print(f"Test:  {len(test_df):>7} articles (FROZEN)")
+    print(f"Train: {len(train_full_df):>7} articles (to be split into Train + Eval)")
 
     # --- Apply label mapping ---
     def _apply_mapping(df: pd.DataFrame) -> pd.DataFrame:
@@ -191,7 +206,7 @@ def load_data(
         original_labels = set(df["label"].unique())
         missing = original_labels - set(label_mapping.keys())
         if missing:
-            print(f"  WARNUNG: Labels ohne Mapping: {missing}")
+            print(f"  WARNING: Labels without mapping: {missing}")
         df = df.copy()
         df["label"] = df["label"].map(label_mapping).fillna(df["label"])
         return df
@@ -203,9 +218,9 @@ def load_data(
 
     remapped = {k: v for k, v in label_mapping.items() if k != v}
     if remapped:
-        print("Label-Mapping Änderungen:")
+        print("Label mapping changes:")
         for orig, new in remapped.items():
-            print(f"  {orig} → {new}")
+            print(f"  {orig} -> {new}")
 
     # --- Train / Eval split ---
     if split_mode == "percentage":
@@ -213,7 +228,7 @@ def load_data(
         small_classes = class_counts[class_counts < 2].index.tolist()
 
         if small_classes:
-            print(f"Klassen mit <2 Artikeln (komplett in Train): {small_classes}")
+            print(f"Classes with <2 articles (fully assigned to Train): {small_classes}")
             mask_small = train_full_df["label"].isin(small_classes)
             splittable_df = train_full_df[~mask_small]
             small_df = train_full_df[mask_small]
@@ -239,7 +254,7 @@ def load_data(
             class_df = train_full_df[train_full_df["label"] == label]
             n = min(len(class_df), eval_per_class)
             if n < 2:
-                print(f"  {label}: nur {len(class_df)} Artikel -> komplett in Train")
+                print(f"  {label}: only {len(class_df)} articles -> fully assigned to Train")
                 train_parts.append(class_df)
                 continue
             eval_sample = class_df.sample(n=n, random_state=random_seed)
@@ -249,14 +264,14 @@ def load_data(
         train_df = pd.concat(train_parts).reset_index(drop=True)
 
     else:
-        raise ValueError(f"Ungültiger split_mode: {split_mode}. Nutze 'percentage' oder 'absolute'.")
+        raise ValueError(f"Invalid split_mode: {split_mode}. Use 'percentage' or 'absolute'.")
 
     train_df = train_df.reset_index(drop=True)
     eval_df = eval_df.reset_index(drop=True)
 
-    print(f"\nTrain: {len(train_df):>6} Artikel")
-    print(f"Eval:  {len(eval_df):>6} Artikel")
-    print(f"Test:  {len(test_df):>6} Artikel (FROZEN)")
+    print(f"\nTrain: {len(train_df):>6} articles")
+    print(f"Eval:  {len(eval_df):>6} articles")
+    print(f"Test:  {len(test_df):>6} articles (FROZEN)")
 
     split_config = {
         "dataset_id": DATASET_ID,
@@ -790,7 +805,7 @@ def generate_report(
         f"| Num Labels | {len(used_labels)} |",
     ]
 
-    # Detaillierte Label-Tabelle mit NLI-Phrasen
+    # Detailed label table with NLI phrases
     remapped = {k: v for k, v in label_mapping.items() if k != v}
     if remapped:
         lines += [

@@ -1,0 +1,404 @@
+{
+  "report_id": "190226_modernbert_large_zeroshot_report_001",
+  "generated_at": "2026-02-19T16:40:46.876634",
+  "model": {
+    "name": "modernbert_large_zeroshot",
+    "type": "zero-shot",
+    "huggingface_id": "MoritzLaurer/ModernBERT-large-zeroshot-v2.0",
+    "language": "English",
+    "max_tokens": 8192,
+    "parameters": "0.4B",
+    "notes": "ModernBERT-large, sehr schnell und speichereffizient. Unterstützt BF16/FP16. 8K Context Window. English-only."
+  },
+  "classification_config": {
+    "hypothesis_template": "Dieser Text handelt {}.",
+    "candidate_labels": [
+      "vom Klima, Klimawandel oder der Energieversorgung",
+      "von Zuwanderung oder Migration",
+      "von der Rente oder dem Rentensystem",
+      "vom Sozialen Gefälle oder von sozialer Ungleicheit",
+      "von der Brandmauer, der AfD oder dem Rechtsextremismus",
+      "von Arbeitslosigkeit",
+      "von der Wirtschaftslage oder der Zukunft der Deutschen Wirtschaft",
+      "von Politikverdruss, dem Vertrauen in die Demokraite oder der Interesse für Politik bei den Bürgern",
+      "vom Gesundheitswesen, der Pflege oder Krankenversicherungen",
+      "von steigenden Preisen und Lebenshaltungskosten oder von Löhnen",
+      "vom Ukraine Krieg oder von Russland",
+      "von der Bundeswehr, der Verteidigung Deutschlands oder Investitionen in die Rüstung",
+      "Andere"
+    ],
+    "nli_phrases": [
+      "Dieser Text handelt vom Klima, Klimawandel oder der Energieversorgung.",
+      "Dieser Text handelt von Zuwanderung oder Migration.",
+      "Dieser Text handelt von der Rente oder dem Rentensystem.",
+      "Dieser Text handelt vom Sozialen Gefälle oder von sozialer Ungleicheit.",
+      "Dieser Text handelt von der Brandmauer, der AfD oder dem Rechtsextremismus.",
+      "Dieser Text handelt von Arbeitslosigkeit.",
+      "Dieser Text handelt von der Wirtschaftslage oder der Zukunft der Deutschen Wirtschaft.",
+      "Dieser Text handelt von Politikverdruss, dem Vertrauen in die Demokraite oder der Interesse für Politik bei den Bürgern.",
+      "Dieser Text handelt vom Gesundheitswesen, der Pflege oder Krankenversicherungen.",
+      "Dieser Text handelt von steigenden Preisen und Lebenshaltungskosten oder von Löhnen.",
+      "Dieser Text handelt vom Ukraine Krieg oder von Russland.",
+      "Dieser Text handelt von der Bundeswehr, der Verteidigung Deutschlands oder Investitionen in die Rüstung.",
+      "Dieser Text handelt Andere."
+    ],
+    "label_mapping": {
+      "Klima / Energie": "vom Klima, Klimawandel oder der Energieversorgung",
+      "Zuwanderung": "von Zuwanderung oder Migration",
+      "Renten": "von der Rente oder dem Rentensystem",
+      "Soziales Gefälle": "vom Sozialen Gefälle oder von sozialer Ungleicheit",
+      "AfD/Rechte": "von der Brandmauer, der AfD oder dem Rechtsextremismus",
+      "Arbeitslosigkeit": "von Arbeitslosigkeit",
+      "Wirtschaftslage": "von der Wirtschaftslage oder der Zukunft der Deutschen Wirtschaft",
+      "Politikverdruss": "von Politikverdruss, dem Vertrauen in die Demokraite oder der Interesse für Politik bei den Bürgern",
+      "Gesundheitswesen, Pflege": "vom Gesundheitswesen, der Pflege oder Krankenversicherungen",
+      "Kosten/Löhne/Preise": "von steigenden Preisen und Lebenshaltungskosten oder von Löhnen",
+      "Ukraine/Krieg/Russland": "vom Ukraine Krieg oder von Russland",
+      "Bundeswehr/Verteidigung": "von der Bundeswehr, der Verteidigung Deutschlands oder Investitionen in die Rüstung"
+    },
+    "label_mapping_remapped": {
+      "Klima / Energie": "vom Klima, Klimawandel oder der Energieversorgung",
+      "Zuwanderung": "von Zuwanderung oder Migration",
+      "Renten": "von der Rente oder dem Rentensystem",
+      "Soziales Gefälle": "vom Sozialen Gefälle oder von sozialer Ungleicheit",
+      "AfD/Rechte": "von der Brandmauer, der AfD oder dem Rechtsextremismus",
+      "Arbeitslosigkeit": "von Arbeitslosigkeit",
+      "Wirtschaftslage": "von der Wirtschaftslage oder der Zukunft der Deutschen Wirtschaft",
+      "Politikverdruss": "von Politikverdruss, dem Vertrauen in die Demokraite oder der Interesse für Politik bei den Bürgern",
+      "Gesundheitswesen, Pflege": "vom Gesundheitswesen, der Pflege oder Krankenversicherungen",
+      "Kosten/Löhne/Preise": "von steigenden Preisen und Lebenshaltungskosten oder von Löhnen",
+      "Ukraine/Krieg/Russland": "vom Ukraine Krieg oder von Russland",
+      "Bundeswehr/Verteidigung": "von der Bundeswehr, der Verteidigung Deutschlands oder Investitionen in die Rüstung"
+    }
+  },
+  "dataset": {
+    "id": "Zorryy/news_articles_2025_elections_germany",
+    "evaluated_on": "test",
+    "n_articles": 617,
+    "n_classes": 13,
+    "split_info": {
+      "n_train": 1043,
+      "n_eval": 261,
+      "n_test": 617,
+      "n_raw": 0,
+      "n_total": 1921,
+      "split_mode": "percentage",
+      "eval_fraction": 0.2,
+      "eval_per_class": null,
+      "random_seed": 42
+    }
+  },
+  "runtime": {
+    "duration_seconds": 325.77,
+    "duration_formatted": "5m 26s",
+    "articles_per_second": 1.89,
+    "gpu": {
+      "gpu_name": "Tesla T4",
+      "gpu_vram_gb": "15.6",
+      "cuda_version": "12.8"
+    },
+    "estimated_cost_per_1000": "$0.02 (T4, estimated)"
+  },
+  "training_params": null,
+  "uploaded_model_url": null,
+  "metrics": {
+    "f1_macro": 0.3244,
+    "f1_weighted": 0.3369,
+    "precision_macro": 0.5911,
+    "precision_weighted": 0.612,
+    "recall_macro": 0.3368,
+    "recall_weighted": 0.3517,
+    "accuracy": 0.3517
+  },
+  "per_class": [
+    {
+      "label": "vom Klima, Klimawandel oder der Energieversorgung",
+      "precision": 0.8,
+      "recall": 0.08,
+      "f1": 0.1455,
+      "support": 50
+    },
+    {
+      "label": "von Zuwanderung oder Migration",
+      "precision": 0.7273,
+      "recall": 0.48,
+      "f1": 0.5783,
+      "support": 50
+    },
+    {
+      "label": "von der Rente oder dem Rentensystem",
+      "precision": 0.8936,
+      "recall": 0.84,
+      "f1": 0.866,
+      "support": 50
+    },
+    {
+      "label": "vom Sozialen Gefälle oder von sozialer Ungleicheit",
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 50
+    },
+    {
+      "label": "von der Brandmauer, der AfD oder dem Rechtsextremismus",
+      "precision": 1.0,
+      "recall": 0.02,
+      "f1": 0.0392,
+      "support": 50
+    },
+    {
+      "label": "von Arbeitslosigkeit",
+      "precision": 0.9556,
+      "recall": 0.86,
+      "f1": 0.9053,
+      "support": 50
+    },
+    {
+      "label": "von der Wirtschaftslage oder der Zukunft der Deutschen Wirtschaft",
+      "precision": 0.4706,
+      "recall": 0.16,
+      "f1": 0.2388,
+      "support": 50
+    },
+    {
+      "label": "von Politikverdruss, dem Vertrauen in die Demokraite oder der Interesse für Politik bei den Bürgern",
+      "precision": 0.2,
+      "recall": 0.0588,
+      "f1": 0.0909,
+      "support": 17
+    },
+    {
+      "label": "vom Gesundheitswesen, der Pflege oder Krankenversicherungen",
+      "precision": 1.0,
+      "recall": 0.08,
+      "f1": 0.1481,
+      "support": 50
+    },
+    {
+      "label": "von steigenden Preisen und Lebenshaltungskosten oder von Löhnen",
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 50
+    },
+    {
+      "label": "vom Ukraine Krieg oder von Russland",
+      "precision": 0.7907,
+      "recall": 0.68,
+      "f1": 0.7312,
+      "support": 50
+    },
+    {
+      "label": "von der Bundeswehr, der Verteidigung Deutschlands oder Investitionen in die Rüstung",
+      "precision": 0.7273,
+      "recall": 0.16,
+      "f1": 0.2623,
+      "support": 50
+    },
+    {
+      "label": "Andere",
+      "precision": 0.1191,
+      "recall": 0.96,
+      "f1": 0.2119,
+      "support": 50
+    }
+  ],
+  "confusion_matrix": [
+    [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      45
+    ],
+    [
+      0,
+      24,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      26
+    ],
+    [
+      0,
+      0,
+      42,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ],
+    [
+      0,
+      2,
+      1,
+      0,
+      0,
+      2,
+      2,
+      0,
+      0,
+      1,
+      0,
+      1,
+      41
+    ],
+    [
+      0,
+      6,
+      0,
+      0,
+      1,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      2,
+      39
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      43,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      1,
+      0,
+      40
+    ],
+    [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      14
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      45
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      2,
+      0,
+      42
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      34,
+      0,
+      15
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      6,
+      8,
+      34
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      48
+    ]
+  ],
+  "notes": "Zero-Shot NLI-Klassifikation auf Volltext mit ModernBERT-large. 8K Context Window — Texte werden kaum gekürzt. FP16 aktiviert. 'Andere' per Confidence-Threshold (0.4) zugewiesen."
+}

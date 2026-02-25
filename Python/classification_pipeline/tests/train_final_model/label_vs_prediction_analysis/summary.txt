@@ -1,0 +1,82 @@
+======================================================================
+  ANALYSE: LABEL vs. PREDICTION (train + test)
+======================================================================
+
+1. Uebersicht
+   Gelabelte Artikel gesamt:  2,360
+   Davon korrekt klassifiz.:  104 (4.4%)
+   Davon falsch klassifiz.:   2,256 (95.6%)
+
+2. Metriken pro Split
+   Split           N      Acc   F1-Mac    F1-Wt     Prec      Rec
+   ----------------------------------------------------------
+   train       1,743   0.0384   0.0265   0.0298   0.0383   0.0337
+   test          617   0.0600   0.0356   0.0375   0.0421   0.0569
+   combined    2,360   0.0441   0.0289   0.0320   0.0392   0.0394
+
+3. Classification Report — TEST Split (n=617)
+                          precision    recall  f1-score   support
+
+         Klima / Energie       0.00      0.00      0.00        50
+             Zuwanderung       0.00      0.00      0.00        50
+                  Renten       0.10      0.20      0.13        50
+        Soziales Gefälle       0.00      0.00      0.00        50
+              AfD/Rechte       0.00      0.00      0.00        50
+        Arbeitslosigkeit       0.07      0.04      0.05        50
+         Wirtschaftslage       0.00      0.00      0.00        50
+         Politikverdruss       0.00      0.00      0.00        17
+Gesundheitswesen, Pflege       0.00      0.00      0.00        50
+     Kosten/Löhne/Preise       0.07      0.28      0.11        50
+  Ukraine/Krieg/Russland       0.03      0.10      0.05        50
+ Bundeswehr/Verteidigung       0.20      0.02      0.04        50
+                  Andere       0.08      0.10      0.09        50
+
+                accuracy                           0.06       617
+               macro avg       0.04      0.06      0.04       617
+            weighted avg       0.04      0.06      0.04       617
+
+4. Classification Report — TRAIN Split (n=1,743)
+                          precision    recall  f1-score   support
+
+         Klima / Energie       0.00      0.00      0.00       150
+             Zuwanderung       0.03      0.01      0.02       151
+                  Renten       0.07      0.12      0.09       162
+        Soziales Gefälle       0.00      0.00      0.00        68
+              AfD/Rechte       0.03      0.01      0.01       150
+        Arbeitslosigkeit       0.03      0.03      0.03       110
+         Wirtschaftslage       0.18      0.03      0.05       150
+         Politikverdruss       0.00      0.00      0.00        33
+Gesundheitswesen, Pflege       0.00      0.00      0.00       156
+     Kosten/Löhne/Preise       0.03      0.10      0.04       155
+  Ukraine/Krieg/Russland       0.02      0.06      0.03       154
+ Bundeswehr/Verteidigung       0.05      0.01      0.01       154
+                  Andere       0.06      0.07      0.07       150
+
+                accuracy                           0.04      1743
+               macro avg       0.04      0.03      0.03      1743
+            weighted avg       0.04      0.04      0.03      1743
+
+5. Haeufigste Fehlklassifikationen (Top 15)
+   Label (true)                   Prediction                         N
+   -------------------------------------------------------------------
+   Bundeswehr/Verteidigung        Kosten/Löhne/Preise              110
+   Kosten/Löhne/Preise            Ukraine/Krieg/Russland            93
+   Ukraine/Krieg/Russland         Kosten/Löhne/Preise               92
+   Renten                         Ukraine/Krieg/Russland            90
+   AfD/Rechte                     Kosten/Löhne/Preise               82
+   Wirtschaftslage                Kosten/Löhne/Preise               74
+   Arbeitslosigkeit               Ukraine/Krieg/Russland            73
+   Zuwanderung                    Kosten/Löhne/Preise               73
+   Gesundheitswesen, Pflege       Ukraine/Krieg/Russland            71
+   Zuwanderung                    Renten                            68
+   Klima / Energie                Kosten/Löhne/Preise               67
+   Andere                         Kosten/Löhne/Preise               65
+   Klima / Energie                Ukraine/Krieg/Russland            53
+   AfD/Rechte                     Andere                            52
+   Gesundheitswesen, Pflege       Kosten/Löhne/Preise               50
+
+6. Confidence-Statistik
+   Korrekt    n=  104  mean=0.2371  median=0.2155  std=0.0716  min=0.1467
+   Falsch     n=2,256  mean=0.2398  median=0.2270  std=0.0666  min=0.1173
+
+======================================================================

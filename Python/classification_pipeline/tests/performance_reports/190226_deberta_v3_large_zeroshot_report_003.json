@@ -1,0 +1,393 @@
+{
+  "report_id": "190226_deberta_v3_large_zeroshot_report_003",
+  "generated_at": "2026-02-19T22:02:21.203294",
+  "model": {
+    "name": "deberta_v3_large_zeroshot",
+    "type": "zero-shot",
+    "huggingface_id": "MoritzLaurer/deberta-v3-large-zeroshot-v1.1-all-33",
+    "language": "English",
+    "max_tokens": 512,
+    "parameters": "304M",
+    "notes": "DeBERTa-v3-large, trained on 33 NLI datasets. Supports FP16. English-only.",
+    "config": null
+  },
+  "classification_config": {
+    "hypothesis_template": "This text is about {}.",
+    "candidate_labels": [
+      "Klima / Energie",
+      "Zuwanderung",
+      "Renten",
+      "Soziales Gefälle",
+      "AfD/Rechte",
+      "Arbeitslosigkeit",
+      "Wirtschaftslage",
+      "Politikverdruss",
+      "Gesundheitswesen, Pflege",
+      "Kosten/Löhne/Preise",
+      "Ukraine/Krieg/Russland",
+      "Bundeswehr/Verteidigung",
+      "Andere"
+    ],
+    "nli_phrases": [
+      "This text is about Klima / Energie.",
+      "This text is about Zuwanderung.",
+      "This text is about Renten.",
+      "This text is about Soziales Gefälle.",
+      "This text is about AfD/Rechte.",
+      "This text is about Arbeitslosigkeit.",
+      "This text is about Wirtschaftslage.",
+      "This text is about Politikverdruss.",
+      "This text is about Gesundheitswesen, Pflege.",
+      "This text is about Kosten/Löhne/Preise.",
+      "This text is about Ukraine/Krieg/Russland.",
+      "This text is about Bundeswehr/Verteidigung.",
+      "This text is about Andere."
+    ],
+    "label_mapping": {
+      "Klima / Energie": "Klima / Energie",
+      "Zuwanderung": "Zuwanderung",
+      "Renten": "Renten",
+      "Soziales Gefälle": "Soziales Gefälle",
+      "AfD/Rechte": "AfD/Rechte",
+      "Arbeitslosigkeit": "Arbeitslosigkeit",
+      "Wirtschaftslage": "Wirtschaftslage",
+      "Politikverdruss": "Politikverdruss",
+      "Gesundheitswesen, Pflege": "Gesundheitswesen, Pflege",
+      "Kosten/Löhne/Preise": "Kosten/Löhne/Preise",
+      "Ukraine/Krieg/Russland": "Ukraine/Krieg/Russland",
+      "Bundeswehr/Verteidigung": "Bundeswehr/Verteidigung",
+      "Andere": "Andere"
+    },
+    "label_mapping_remapped": null
+  },
+  "dataset": {
+    "id": "Zorryy/news_articles_2025_elections_germany",
+    "evaluated_on": "test",
+    "n_articles": 617,
+    "n_classes": 13,
+    "split_info": {
+      "n_train": 1043,
+      "n_eval": 261,
+      "n_test": 617,
+      "n_raw": 0,
+      "n_total": 1921,
+      "split_mode": "percentage",
+      "eval_fraction": 0.2,
+      "eval_per_class": null,
+      "random_seed": 42
+    }
+  },
+  "runtime": {
+    "duration_seconds": 500.17,
+    "duration_formatted": "8m 20s",
+    "articles_per_second": 1.23,
+    "gpu": {
+      "gpu_name": "Tesla T4",
+      "gpu_vram_gb": "15.6",
+      "cuda_version": "12.8"
+    },
+    "estimated_cost_per_1000": "$0.03 (T4, estimated)"
+  },
+  "training_params": null,
+  "uploaded_model_url": null,
+  "metrics": {
+    "f1_macro": 0.6558,
+    "f1_weighted": 0.6811,
+    "precision_macro": 0.7041,
+    "precision_weighted": 0.7356,
+    "recall_macro": 0.6547,
+    "recall_weighted": 0.6645,
+    "accuracy": 0.6645
+  },
+  "per_class": [
+    {
+      "label": "Klima / Energie",
+      "precision": 0.75,
+      "recall": 0.72,
+      "f1": 0.7347,
+      "support": 50
+    },
+    {
+      "label": "Zuwanderung",
+      "precision": 0.8056,
+      "recall": 0.58,
+      "f1": 0.6744,
+      "support": 50
+    },
+    {
+      "label": "Renten",
+      "precision": 0.9787,
+      "recall": 0.92,
+      "f1": 0.9485,
+      "support": 50
+    },
+    {
+      "label": "Soziales Gefälle",
+      "precision": 0.8,
+      "recall": 0.4,
+      "f1": 0.5333,
+      "support": 50
+    },
+    {
+      "label": "AfD/Rechte",
+      "precision": 0.7576,
+      "recall": 0.5,
+      "f1": 0.6024,
+      "support": 50
+    },
+    {
+      "label": "Arbeitslosigkeit",
+      "precision": 0.8302,
+      "recall": 0.88,
+      "f1": 0.8544,
+      "support": 50
+    },
+    {
+      "label": "Wirtschaftslage",
+      "precision": 0.4167,
+      "recall": 0.6,
+      "f1": 0.4918,
+      "support": 50
+    },
+    {
+      "label": "Politikverdruss",
+      "precision": 0.1143,
+      "recall": 0.4706,
+      "f1": 0.1839,
+      "support": 17
+    },
+    {
+      "label": "Gesundheitswesen, Pflege",
+      "precision": 0.7544,
+      "recall": 0.86,
+      "f1": 0.8037,
+      "support": 50
+    },
+    {
+      "label": "Kosten/Löhne/Preise",
+      "precision": 0.56,
+      "recall": 0.28,
+      "f1": 0.3733,
+      "support": 50
+    },
+    {
+      "label": "Ukraine/Krieg/Russland",
+      "precision": 0.9318,
+      "recall": 0.82,
+      "f1": 0.8723,
+      "support": 50
+    },
+    {
+      "label": "Bundeswehr/Verteidigung",
+      "precision": 0.907,
+      "recall": 0.78,
+      "f1": 0.8387,
+      "support": 50
+    },
+    {
+      "label": "Andere",
+      "precision": 0.5469,
+      "recall": 0.7,
+      "f1": 0.614,
+      "support": 50
+    }
+  ],
+  "confusion_matrix": [
+    [
+      36,
+      1,
+      0,
+      0,
+      0,
+      0,
+      2,
+      4,
+      0,
+      0,
+      1,
+      0,
+      6
+    ],
+    [
+      0,
+      29,
+      0,
+      0,
+      4,
+      0,
+      0,
+      13,
+      0,
+      1,
+      0,
+      0,
+      3
+    ],
+    [
+      0,
+      0,
+      46,
+      2,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      1,
+      1,
+      20,
+      1,
+      8,
+      5,
+      6,
+      3,
+      3,
+      0,
+      0,
+      2
+    ],
+    [
+      0,
+      5,
+      0,
+      0,
+      25,
+      0,
+      0,
+      17,
+      1,
+      0,
+      0,
+      0,
+      2
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      44,
+      3,
+      2,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      2,
+      0,
+      0,
+      0,
+      0,
+      1,
+      30,
+      2,
+      3,
+      3,
+      0,
+      1,
+      8
+    ],
+    [
+      1,
+      0,
+      0,
+      1,
+      2,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      2,
+      1,
+      43,
+      3,
+      0,
+      0,
+      0
+    ],
+    [
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      26,
+      3,
+      1,
+      14,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      2,
+      3,
+      0,
+      0,
+      41,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      2,
+      39,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      2,
+      6,
+      1,
+      0,
+      1,
+      35
+    ]
+  ],
+  "notes": "Zero-Shot NLI-Klassifikation mit DeBERTa-v3-large auf Volltext. Texte werden automatisch auf 512 Tokens gekürzt (inverted pyramid)."
+}
