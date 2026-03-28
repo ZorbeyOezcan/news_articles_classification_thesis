@@ -17,6 +17,7 @@ st.set_page_config(page_title="Artikel-Klassifikation Dashboard", layout="wide")
 def load_data():
     df = pd.read_csv(DATA_PATH, low_memory=False)
     df["date_time"] = pd.to_datetime(df["date_time"], errors="coerce")
+    df = df.dropna(subset=["date_time"])
     df["date"] = df["date_time"].dt.date
     return df
 
