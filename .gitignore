@@ -60,6 +60,7 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+venv_*/
 
 # Secrets and tokens
 .env
