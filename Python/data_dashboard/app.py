@@ -36,17 +36,21 @@ sel_domains = st.sidebar.multiselect("Domain", domains, default=[])
 predictions = sorted(df["prediction"].dropna().unique())
 sel_predictions = st.sidebar.multiselect("Prediction (Kategorie)", predictions, default=[])
 
-# Medientyp filter
-medientypen = sorted(df["Medientyp"].dropna().unique())
-sel_medientyp = st.sidebar.multiselect("Medientyp", medientypen, default=[])
+# Political spectrum filter
+spectrums = sorted(df["political_spectrum"].dropna().unique())
+sel_spectrum = st.sidebar.multiselect("Political Spectrum", spectrums, default=[])
 
-# Bundesland filter
-bundeslaender = sorted(df["Bundesland"].dropna().unique())
-sel_bundesland = st.sidebar.multiselect("Bundesland", bundeslaender, default=[])
+# Quality filter
+qualities = sorted(df["quality"].dropna().unique())
+sel_quality = st.sidebar.multiselect("Quality", qualities, default=[])
 
-# Verlag filter
-verlage = sorted(df["Verlag"].dropna().unique())
-sel_verlag = st.sidebar.multiselect("Verlag", verlage, default=[])
+# State filter
+states = sorted(df["state"].dropna().unique())
+sel_state = st.sidebar.multiselect("State (Bundesland)", states, default=[])
+
+# Publisher filter
+publishers = sorted(df["publisher"].dropna().unique())
+sel_publisher = st.sidebar.multiselect("Publisher", publishers, default=[])
 
 # Prediction score slider
 min_score, max_score = float(df["prediction_score"].min()), float(df["prediction_score"].max())
@@ -63,12 +67,14 @@ if sel_domains:
     filtered = filtered[filtered["domain"].isin(sel_domains)]
 if sel_predictions:
     filtered = filtered[filtered["prediction"].isin(sel_predictions)]
-if sel_medientyp:
-    filtered = filtered[filtered["Medientyp"].isin(sel_medientyp)]
-if sel_bundesland:
-    filtered = filtered[filtered["Bundesland"].isin(sel_bundesland)]
-if sel_verlag:
-    filtered = filtered[filtered["Verlag"].isin(sel_verlag)]
+if sel_spectrum:
+    filtered = filtered[filtered["political_spectrum"].isin(sel_spectrum)]
+if sel_quality:
+    filtered = filtered[filtered["quality"].isin(sel_quality)]
+if sel_state:
+    filtered = filtered[filtered["state"].isin(sel_state)]
+if sel_publisher:
+    filtered = filtered[filtered["publisher"].isin(sel_publisher)]
 filtered = filtered[filtered["prediction_score"] >= sel_score]
 if len(sel_date_range) == 2:
     filtered = filtered[(filtered["date"] >= sel_date_range[0]) & (filtered["date"] <= sel_date_range[1])]
@@ -130,33 +136,42 @@ with tab_time:
 
 # -- Tab 3: Medien-Info --
 with tab_media:
-    media_cols = ["Publikation", "Medientyp", "Verlag", "Ausgabe", "Markengruppe",
-                  "Hauptausgabe", "redaktionelleEinheit", "Ort", "Bundesland", "Region",
-                  "Rhythmus", "Erscheinungstage", "paidcontent", "Themengebiete"]
+    media_cols = ["publication", "publisher", "brand_group", "editorial_unit",
+                  "city", "state", "region", "political_spectrum", "quality"]
     available_media_cols = [c for c in media_cols if c in filtered.columns]
 
     c1, c2 = st.columns(2)
     with c1:
-        if "Medientyp" in filtered.columns:
-            mt_counts = filtered["Medientyp"].value_counts().reset_index()
-            mt_counts.columns = ["Medientyp", "Anzahl"]
-            fig_mt = px.pie(mt_counts, names="Medientyp", values="Anzahl", title="Verteilung Medientyp")
-            st.plotly_chart(fig_mt, use_container_width=True)
+        if "political_spectrum" in filtered.columns:
+            ps_counts = filtered["political_spectrum"].value_counts().reset_index()
+            ps_counts.columns = ["Political Spectrum", "Anzahl"]
+            fig_ps = px.pie(ps_counts, names="Political Spectrum", values="Anzahl",
+                            title="Political Spectrum")
+            st.plotly_chart(fig_ps, use_container_width=True)
 
     with c2:
-        if "Bundesland" in filtered.columns:
-            bl_counts = filtered["Bundesland"].value_counts().reset_index()
-            bl_counts.columns = ["Bundesland", "Anzahl"]
-            fig_bl = px.bar(bl_counts, x="Bundesland", y="Anzahl", title="Artikel pro Bundesland")
+        if "quality" in filtered.columns:
+            q_counts = filtered["quality"].value_counts().reset_index()
+            q_counts.columns = ["Quality", "Anzahl"]
+            fig_q = px.pie(q_counts, names="Quality", values="Anzahl", title="Quality")
+            st.plotly_chart(fig_q, use_container_width=True)
+
+    c3, c4 = st.columns(2)
+    with c3:
+        if "state" in filtered.columns:
+            bl_counts = filtered["state"].value_counts().reset_index()
+            bl_counts.columns = ["State", "Anzahl"]
+            fig_bl = px.bar(bl_counts, x="State", y="Anzahl", title="Artikel pro Bundesland")
             st.plotly_chart(fig_bl, use_container_width=True)
 
-    if "Verlag" in filtered.columns:
-        verlag_counts = filtered["Verlag"].value_counts().head(20).reset_index()
-        verlag_counts.columns = ["Verlag", "Anzahl"]
-        fig_v = px.bar(verlag_counts, x="Anzahl", y="Verlag", orientation="h",
-                       title="Top 20 Verlage")
-        fig_v.update_layout(yaxis=dict(autorange="reversed"))
-        st.plotly_chart(fig_v, use_container_width=True)
+    with c4:
+        if "publisher" in filtered.columns:
+            verlag_counts = filtered["publisher"].value_counts().head(20).reset_index()
+            verlag_counts.columns = ["Publisher", "Anzahl"]
+            fig_v = px.bar(verlag_counts, x="Anzahl", y="Publisher", orientation="h",
+                           title="Top 20 Publisher")
+            fig_v.update_layout(yaxis=dict(autorange="reversed"))
+            st.plotly_chart(fig_v, use_container_width=True)
 
     st.subheader("Medien-Metadaten pro Domain")
     domain_media = filtered.drop_duplicates(subset="domain")[["domain"] + available_media_cols]
@@ -166,7 +181,7 @@ with tab_media:
 with tab_detail:
     st.subheader("Artikelliste")
     display_cols = ["id", "domain", "headline", "prediction", "prediction_score", "date", "author",
-                    "Medientyp", "Verlag", "Bundesland"]
+                    "political_spectrum", "quality", "publisher", "state"]
     display_cols = [c for c in display_cols if c in filtered.columns]
     st.dataframe(
         filtered[display_cols].sort_values("prediction_score", ascending=False),
